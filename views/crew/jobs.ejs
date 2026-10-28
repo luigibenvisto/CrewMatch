@@ -1,0 +1,23 @@
+<%- include('../partials/header') %>
+<h1>Jobs that fit you</h1>
+<p class="muted">These open positions match your roles, location, availability and rates. Productions send offers to crew; marking a job as interesting lets the production know.</p>
+<% if (!jobs.length) { %>
+  <section class="card"><p>No matching jobs right now. Check that your <a href="/crew/profile#availability">availability</a>, travel radius and roles are up to date.</p></section>
+<% } %>
+<% jobs.forEach(function (j) { %>
+  <section class="card item">
+    <h2><%= roleLabel(j.role_code) %> · <%= j.project_title %></h2>
+    <p><%= j.company_name %> · <%= j.city_name %> · <%= formatDate(j.start_date) %> to <%= formatDate(j.end_date) %></p>
+    <p><%- include('../partials/rate', { min: j.rate_min, max: j.rate_max }) %></p>
+    <% if (j.required_skills.length || j.required_gear.length) { %>
+      <p class="small">Looking for: <% j.required_skills.concat(j.required_gear).forEach(function (t) { %><span class="tag"><%= t %></span> <% }) %></p>
+    <% } %>
+    <% if (j.notes) { %><p class="small"><%= j.notes %></p><% } %>
+    <% if (j.project_description) { %><details><summary>About the project</summary><p><%= j.project_description %></p></details><% } %>
+    <form method="post" action="/crew/jobs/<%= j.position_id %>/interest">
+      <%- include('../partials/csrf') %>
+      <button class="<%= j.interested ? 'secondary' : '' %>"><%= j.interested ? 'Interested ✓ (click to undo)' : "I'm interested" %></button>
+    </form>
+  </section>
+<% }) %>
+<%- include('../partials/footer') %>

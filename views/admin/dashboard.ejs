@@ -1,0 +1,68 @@
+<%- include('../partials/header') %>
+<h1>Admin</h1>
+<div class="stats">
+  <div class="card"><p class="big"><%= totals.crew %></p><p>Crew</p></div>
+  <div class="card"><p class="big"><%= totals.productions %></p><p>Productions</p></div>
+  <div class="card"><p class="big"><%= totals.projects %></p><p>Projects</p></div>
+  <div class="card"><p class="big"><%= formatMoney(totals.revenue_cents) %></p><p>Real revenue</p></div>
+</div>
+<section class="card">
+  <h2>Jobs by status</h2>
+  <p><% engagementCounts.forEach(function (e) { %><span class="tag"><%= e.status %>: <%= e.count %></span> <% }) %><%= engagementCounts.length ? '' : 'None yet.' %></p>
+</section>
+<% if (totals.sample_accounts > 0) { %>
+<section class="card highlight">
+  <h2>Sample data</h2>
+  <p><%= totals.sample_accounts %> invented sample accounts are loaded. Delete them before inviting real users.</p>
+  <form method="post" action="/admin/sample-data/delete" data-confirm="Delete all sample accounts and their projects? This cannot be undone.">
+    <%- include('../partials/csrf') %><button class="danger">Delete all sample data</button>
+  </form>
+</section>
+<% } %>
+<section class="card">
+  <h2>Crew (<%= crew.length %>)</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>City</th><th>Confirmed jobs</th><th>Cancellations</th><th>Last worked</th><th>Joined</th><th></th></tr></thead>
+    <tbody>
+    <% crew.forEach(function (c) { %>
+      <tr class="<%= c.is_suspended ? 'suspended' : '' %>">
+        <td><%= c.full_name %><%= c.is_sample ? ' (sample)' : '' %></td><td><%= c.email %></td><td><%= c.primary_role ? roleLabel(c.primary_role) : '' %></td>
+        <td><%= c.city_name %></td><td><%= c.confirmed_jobs %></td><td><%= c.crew_cancellations %></td>
+        <td><%= c.last_worked_on ? formatDate(c.last_worked_on) : '–' %></td><td><%= c.created_at.toISOString().slice(0, 10) %></td>
+        <td><form method="post" action="/admin/crew/<%= c.id %>/suspend"><%- include('../partials/csrf') %><button class="link"><%= c.is_suspended ? 'Restore' : 'Suspend' %></button></form></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+</section>
+<section class="card">
+  <h2>Productions (<%= productions.length %>)</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Company</th><th>Contact</th><th>Email</th><th>Projects</th><th>Joined</th><th></th></tr></thead>
+    <tbody>
+    <% productions.forEach(function (p) { %>
+      <tr class="<%= p.is_suspended ? 'suspended' : '' %>">
+        <td><%= p.company_name %></td><td><%= p.contact_name %></td><td><%= p.email %></td><td><%= p.project_count %></td>
+        <td><%= p.created_at.toISOString().slice(0, 10) %></td>
+        <td><form method="post" action="/admin/productions/<%= p.id %>/suspend"><%- include('../partials/csrf') %><button class="link"><%= p.is_suspended ? 'Restore' : 'Suspend' %></button></form></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+</section>
+<section class="card">
+  <h2>Projects (<%= projects.length %>)</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>Title</th><th>Production</th><th>City</th><th>Dates</th><th>Positions</th><th>Status</th><th>Billing</th></tr></thead>
+    <tbody>
+    <% projects.forEach(function (p) { %>
+      <tr>
+        <td><%= p.title %></td><td><%= p.company_name %></td><td><%= p.city_name %></td>
+        <td><%= formatDate(p.start_date) %> – <%= formatDate(p.end_date) %></td><td><%= p.position_count %></td>
+        <td><%= p.status %></td><td><%= p.billing %><%= p.fee_cents ? ' ' + formatMoney(p.fee_cents) : '' %></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+</section>
+<%- include('../partials/footer') %>

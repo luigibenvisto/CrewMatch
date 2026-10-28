@@ -1,0 +1,76 @@
+<%- include('../partials/header') %>
+<p><a href="/production">← Dashboard</a></p>
+<h1><%= project.title %></h1>
+<p><%= project.city_name %> · <%= formatDate(project.start_date) %> to <%= formatDate(project.end_date) %> (<%= quote.days %> days)
+  <% if (project.budget_min != null || project.budget_max != null) { %> · Budget <%= currency %> <%= project.budget_min != null ? project.budget_min : '?' %>–<%= project.budget_max != null ? project.budget_max : '?' %><% } %></p>
+<% if (project.description) { %><p><%= project.description %></p><% } %>
+
+<% if (project.status === 'draft') { %>
+  <section class="card highlight">
+    <h2>Open this project to crew</h2>
+    <p>Crew only see your positions, and you only see suggested crew, once the project is paid for.</p>
+    <% if (paymentsAreStub) { %><p class="small muted">Test mode: payments are simulated and no money is charged.</p><% } %>
+    <div class="actions">
+      <% if (subscription) { %>
+        <form method="post" action="/production/projects/<%= project.id %>/use-subscription"><%- include('../partials/csrf') %><button>Open with my subscription (no extra cost)</button></form>
+      <% } else { %>
+        <form method="post" action="/production/projects/<%= project.id %>/pay" data-confirm="Pay <%= formatMoney(quote.amountCents) %> for this project?"><%- include('../partials/csrf') %><button>Pay <%= formatMoney(quote.amountCents) %> (<%= quote.tierLabel %>)</button></form>
+        <a class="button secondary" href="/production/billing">Or subscribe for <%= formatMoney(subscriptionQuote.amountCents) %> / <%= subscriptionQuote.periodDays %> days</a>
+      <% } %>
+    </div>
+  </section>
+<% } else if (project.status === 'open') { %>
+  <p class="tag">Open · <%= project.billing === 'subscription' ? 'covered by subscription' : 'paid ' + formatMoney(project.fee_cents || 0) %></p>
+<% } else { %>
+  <p class="tag">Closed</p>
+<% } %>
+
+<section class="card">
+  <h2>Positions</h2>
+  <% if (!positions.length) { %><p class="muted">No positions yet. Add the roles you need below.</p><% } else { %>
+  <table>
+    <thead><tr><th>Role</th><th>People</th><th>Dates</th><th>Day rate</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% positions.forEach(function (p) { %>
+        <tr>
+          <td><%= roleLabel(p.role_code) %></td>
+          <td><%= p.accepted_count %> of <%= p.headcount %> booked<%= p.pending_count ? ', ' + p.pending_count + ' offer(s) pending' : '' %></td>
+          <td><%= formatDate(p.start_date) %> – <%= formatDate(p.end_date) %></td>
+          <td><%- include('../partials/rate', { min: p.rate_min, max: p.rate_max }) %></td>
+          <td><%= p.status %></td>
+          <td><a href="/production/positions/<%= p.id %>"><%= project.status === 'open' && p.status === 'open' ? 'See suggested crew' : 'Details' %></a></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</section>
+
+<% if (project.status !== 'closed') { %>
+<section class="card" id="add-position">
+  <h2>Add a position</h2>
+  <form method="post" action="/production/projects/<%= project.id %>/positions">
+    <%- include('../partials/csrf') %>
+    <div class="grid2">
+      <div><label for="role_code">Role</label><%- include('../partials/role-select', { name: 'role_code', selected: values.role_code }) %></div>
+      <div><label for="headcount">How many people</label><input id="headcount" name="headcount" type="number" min="1" max="50" required value="<%= values.headcount || 1 %>"></div>
+      <div><label for="p_start">Start date</label><input id="p_start" name="start_date" type="date" required min="<%= project.start_date %>" max="<%= project.end_date %>" value="<%= values.start_date || '' %>"></div>
+      <div><label for="p_end">End date</label><input id="p_end" name="end_date" type="date" required min="<%= project.start_date %>" max="<%= project.end_date %>" value="<%= values.end_date || '' %>"></div>
+      <div><label for="p_rate_min">Day rate, minimum (<%= currency %>)</label><input id="p_rate_min" name="rate_min" type="number" min="0" value="<%= values.rate_min || '' %>"></div>
+      <div><label for="p_rate_max">Day rate, maximum (<%= currency %>)</label><input id="p_rate_max" name="rate_max" type="number" min="0" value="<%= values.rate_max || '' %>"></div>
+    </div>
+    <label for="required_skills">Skills wanted <span class="muted">(comma separated)</span></label>
+    <input id="required_skills" name="required_skills" maxlength="1500" value="<%= [].concat(values.required_skills || []).join(', ') %>">
+    <label for="required_gear">Gear wanted <span class="muted">(comma separated)</span></label>
+    <input id="required_gear" name="required_gear" maxlength="1500" value="<%= [].concat(values.required_gear || []).join(', ') %>">
+    <label for="notes">Notes for crew</label>
+    <textarea id="notes" name="notes" rows="2" maxlength="1000"><%= values.notes || '' %></textarea>
+    <button type="submit">Add position</button>
+  </form>
+</section>
+<% } %>
+
+<% if (project.status === 'open') { %>
+  <form method="post" action="/production/projects/<%= project.id %>/close" data-confirm="Close this project? Crew will no longer see it."><%- include('../partials/csrf') %><button class="danger">Close project</button></form>
+<% } %>
+<%- include('../partials/footer') %>

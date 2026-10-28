@@ -1,0 +1,10 @@
+<select name="<%= name %>" id="<%= name %>" required>
+  <option value="">Pick a role</option>
+  <% departments.forEach(function (d) { %>
+    <optgroup label="<%= d.label %>">
+      <% d.roles.forEach(function (r) { %>
+        <option value="<%= r.code %>" <%= selected === r.code ? 'selected' : '' %>><%= r.label %></option>
+      <% }) %>
+    </optgroup>
+  <% }) %>
+</select>

@@ -1,0 +1,6 @@
+<select name="city_code" id="city_code" required>
+  <option value="">Pick a city</option>
+  <% cities.forEach(function (c) { %>
+    <option value="<%= c.code %>" <%= selected === c.code ? 'selected' : '' %>><%= c.name %> (<%= c.country %>)</option>
+  <% }) %>
+</select>

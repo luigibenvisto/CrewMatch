@@ -1,0 +1,82 @@
+<%- include('../partials/header') %>
+<p><a href="/production/projects/<%= position.project_id %>">← <%= position.project_title %></a></p>
+<h1><%= roleLabel(position.role_code) %></h1>
+<p><%= position.city_name %> · <%= formatDate(position.start_date) %> to <%= formatDate(position.end_date) %> · <%- include('../partials/rate', { min: position.rate_min, max: position.rate_max }) %> · <%= position.headcount %> needed</p>
+
+<section class="card">
+  <h2>Suggested crew</h2>
+  <% if (position.project_status !== 'open') { %>
+    <p class="muted">Open the project to see suggested crew.</p>
+  <% } else if (position.status !== 'open') { %>
+    <p class="muted">This position is <%= position.status %>.</p>
+  <% } else if (!shortlist.length) { %>
+    <p class="muted">Nobody suitable and available right now. New crew join all the time, so check back. Widening the day rate or removing must-have gear can also help.</p>
+  <% } else { %>
+    <p class="muted">Best fit first. People already sent an offer are listed further down.</p>
+  <% } %>
+  <ol class="shortlist">
+  <% shortlist.forEach(function (c) { %>
+    <li class="item">
+      <h3><%= c.full_name %> <% if (c.interested) { %><span class="tag">Interested</span><% } %></h3>
+      <p><%= roleLabel(c.primary_role) %><%= c.other_roles.length ? ' · also ' + c.other_roles.map(roleLabel).join(', ') : '' %></p>
+      <p class="small"><%= c.city_name %> · <%- include('../partials/rate', { min: c.rate_min, max: c.rate_max }) %> · <%= c.confirmed_jobs %> confirmed job<%= c.confirmed_jobs === 1 ? '' : 's' %> on CrewMatch</p>
+      <details>
+        <summary>Profile</summary>
+        <% if (c.bio) { %><p><%= c.bio %></p><% } %>
+        <% if (c.skills.length) { %><p class="small">Skills: <% c.skills.forEach(function (t) { %><span class="tag"><%= t %></span> <% }) %></p><% } %>
+        <% if (c.gear.length) { %><p class="small">Gear: <% c.gear.forEach(function (t) { %><span class="tag"><%= t %></span> <% }) %></p><% } %>
+        <% if (c.credits.length) { %>
+          <p class="small">Recent credits:</p>
+          <ul class="small"><% c.credits.forEach(function (cr) { %><li><%= cr.project_title %> · <%= cr.role_title %><%= cr.year ? ' · ' + cr.year : '' %></li><% }) %></ul>
+        <% } %>
+      </details>
+      <form method="post" action="/production/positions/<%= position.id %>/offers" class="row">
+        <%- include('../partials/csrf') %>
+        <input type="hidden" name="crew_id" value="<%= c.id %>">
+        <div><label for="rate_<%= c.id %>">Day rate offered (<%= currency %>)</label><input id="rate_<%= c.id %>" name="offered_rate" type="number" min="0" value="<%= position.rate_max != null ? position.rate_max : '' %>"></div>
+        <div class="grow"><label for="msg_<%= c.id %>">Message</label><input id="msg_<%= c.id %>" name="message" maxlength="1000" placeholder="Call time, what to bring, anything they should know"></div>
+        <div><button>Send offer</button></div>
+      </form>
+    </li>
+  <% }) %>
+  </ol>
+</section>
+
+<section class="card">
+  <h2>Offers sent</h2>
+  <% if (!sent.length) { %><p class="muted">No offers sent yet.</p><% } else { %>
+  <table>
+    <thead><tr><th>Crew</th><th>Rate</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    <% sent.forEach(function (e) { %>
+      <tr>
+        <td><%= e.full_name %><% if (e.contact_email) { %><br><span class="small"><a href="mailto:<%= e.contact_email %>"><%= e.contact_email %></a><%= e.contact_phone ? ' · ' + e.contact_phone : '' %></span><% } %></td>
+        <td><%= e.offered_rate != null ? currency + ' ' + e.offered_rate : '–' %></td>
+        <td>
+          <% if (e.status === 'accepted') { %>
+            Accepted<%= e.crew_confirmed_at ? ' · crew confirmed' : '' %><%= e.production_confirmed_at ? ' · you confirmed' : '' %>
+          <% } else if (e.status === 'completed') { %>Worked, confirmed by both sides
+          <% } else if (e.status === 'cancelled') { %>Cancelled by <%= e.cancelled_by %>
+          <% } else { %><%= e.status.charAt(0).toUpperCase() + e.status.slice(1) %><% } %>
+        </td>
+        <td class="actions">
+          <% if (e.status === 'offered') { %>
+            <form method="post" action="/production/engagements/<%= e.id %>/withdraw"><%- include('../partials/csrf') %><button class="secondary">Withdraw</button></form>
+          <% } else if (e.status === 'accepted' && !e.production_confirmed_at) { %>
+            <form method="post" action="/production/engagements/<%= e.id %>/confirm" data-confirm="Confirm that <%= e.full_name %> worked this job?"><%- include('../partials/csrf') %><button>Confirm job was worked</button></form>
+            <% if (!e.crew_confirmed_at) { %>
+              <form method="post" action="/production/engagements/<%= e.id %>/cancel" data-confirm="Cancel this booking?"><%- include('../partials/csrf') %><button class="danger">Cancel</button></form>
+            <% } %>
+          <% } %>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</section>
+
+<% if (position.status === 'open') { %>
+  <form method="post" action="/production/positions/<%= position.id %>/close" data-confirm="Close this position?"><%- include('../partials/csrf') %><button class="danger">Close position</button></form>
+<% } %>
+<%- include('../partials/footer') %>

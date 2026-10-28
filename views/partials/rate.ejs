@@ -1,0 +1,1 @@
+<% if (min == null && max == null) { %>Rate not set<% } else if (min != null && max != null) { %><%= currency %> <%= min %>–<%= max %> / day<% } else { %><%= currency %> <%= min != null ? min : max %> / day<% } %>

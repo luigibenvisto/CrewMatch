@@ -1,0 +1,22 @@
+<%- include('../partials/header') %>
+<section class="card narrow">
+  <h1>Post a project</h1>
+  <p class="muted">Save the project, add positions, then pay (or use your subscription) to open it to crew.</p>
+  <form method="post" action="/production/projects">
+    <%- include('../partials/csrf') %>
+    <label for="title">Project title</label>
+    <input id="title" name="title" required maxlength="160" value="<%= values.title || '' %>">
+    <label for="description">Short description</label>
+    <textarea id="description" name="description" rows="4" maxlength="4000"><%= values.description || '' %></textarea>
+    <label for="city_code">Shoot location</label>
+    <%- include('../partials/city-select', { selected: values.city_code }) %>
+    <div class="grid2">
+      <div><label for="start_date">Start date</label><input id="start_date" name="start_date" type="date" required value="<%= values.start_date || '' %>"></div>
+      <div><label for="end_date">End date</label><input id="end_date" name="end_date" type="date" required value="<%= values.end_date || '' %>"></div>
+      <div><label for="budget_min">Total budget, minimum (<%= currency %>, optional)</label><input id="budget_min" name="budget_min" type="number" min="0" value="<%= values.budget_min || '' %>"></div>
+      <div><label for="budget_max">Total budget, maximum (<%= currency %>, optional)</label><input id="budget_max" name="budget_max" type="number" min="0" value="<%= values.budget_max || '' %>"></div>
+    </div>
+    <button type="submit">Save project</button>
+  </form>
+</section>
+<%- include('../partials/footer') %>
