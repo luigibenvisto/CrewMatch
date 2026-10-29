@@ -1,0 +1,123 @@
+<%- include('../partials/header') %>
+<h1>Your profile</h1>
+<p class="muted">Productions see your name, roles, city, rates, skills, gear, bio and credits when you are suggested for a position. Your email and phone are only shared after you accept an offer.</p>
+
+<section class="card">
+  <h2>Basics</h2>
+  <form method="post" action="/crew/profile">
+    <%- include('../partials/csrf') %>
+    <div class="grid2">
+      <div>
+        <label for="full_name">Name</label>
+        <input id="full_name" name="full_name" required maxlength="120" value="<%= values.full_name || '' %>">
+      </div>
+      <div>
+        <label for="phone">Phone <span class="muted">(optional, shared after you accept an offer)</span></label>
+        <input id="phone" name="phone" maxlength="40" value="<%= values.phone || '' %>" autocomplete="tel">
+      </div>
+      <div>
+        <label for="primary_role">Main role</label>
+        <%- include('../partials/role-select', { name: 'primary_role', selected: values.primary_role }) %>
+      </div>
+      <div>
+        <label for="other_roles">Other roles you do <span class="muted">(hold Ctrl or Cmd to pick several)</span></label>
+        <select id="other_roles" name="other_roles" multiple size="6">
+          <% departments.forEach(function (d) { %>
+            <optgroup label="<%= d.label %>">
+              <% d.roles.forEach(function (r) { %>
+                <option value="<%= r.code %>" <%= (values.other_roles || []).indexOf(r.code) >= 0 ? 'selected' : '' %>><%= r.label %></option>
+              <% }) %>
+            </optgroup>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label for="city_code">Based in</label>
+        <%- include('../partials/city-select', { selected: values.city_code }) %>
+      </div>
+      <div>
+        <label for="travel_radius_km">How far you will travel for work (km)</label>
+        <input id="travel_radius_km" name="travel_radius_km" type="number" min="0" max="20000" required value="<%= values.travel_radius_km != null ? values.travel_radius_km : 50 %>">
+      </div>
+      <div>
+        <label for="rate_min">Day rate, minimum (<%= currency %>)</label>
+        <input id="rate_min" name="rate_min" type="number" min="0" max="100000" value="<%= values.rate_min != null ? values.rate_min : '' %>">
+      </div>
+      <div>
+        <label for="rate_max">Day rate, maximum (<%= currency %>)</label>
+        <input id="rate_max" name="rate_max" type="number" min="0" max="100000" value="<%= values.rate_max != null ? values.rate_max : '' %>">
+      </div>
+    </div>
+    <label for="skills">Skills <span class="muted">(separate with commas, e.g. steadicam, focus pulling, rigging)</span></label>
+    <input id="skills" name="skills" maxlength="1500" value="<%= [].concat(values.skills || []).join(', ') %>">
+    <label for="gear">Gear you own <span class="muted">(separate with commas, e.g. arri alexa, skypanel, sound devices 888)</span></label>
+    <input id="gear" name="gear" maxlength="1500" value="<%= [].concat(values.gear || []).join(', ') %>">
+    <label for="bio">About you</label>
+    <textarea id="bio" name="bio" rows="4" maxlength="2000"><%= values.bio || '' %></textarea>
+    <button type="submit">Save profile</button>
+  </form>
+</section>
+
+<section class="card" id="availability">
+  <h2>Availability calendar</h2>
+  <p class="muted">Add the periods you are free to work. You are only matched to jobs on days you mark as available. Days you are booked through CrewMatch are blocked automatically.</p>
+  <div class="calendar-legend"><span class="day available">Available</span> <span class="day booked">Booked</span> <span class="day unset">Not set</span></div>
+  <div class="months">
+    <% months.forEach(function (m) { %>
+      <table class="month">
+        <caption><%= m.label %></caption>
+        <thead><tr><th>Mo</th><th>Tu</th><th>We</th><th>Th</th><th>Fr</th><th>Sa</th><th>Su</th></tr></thead>
+        <tbody>
+          <% m.weeks.forEach(function (w) { %>
+            <tr>
+              <% w.forEach(function (c) { %>
+                <% if (!c) { %><td></td><% } else { %><td class="day <%= c.state %> <%= c.past ? 'past' : '' %>" title="<%= c.iso %>"><%= c.day %></td><% } %>
+              <% }) %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% }) %>
+  </div>
+  <form method="post" action="/crew/availability" class="row">
+    <%- include('../partials/csrf') %>
+    <div><label for="av_start">From</label><input id="av_start" name="start_date" type="date" required min="<%= today %>"></div>
+    <div><label for="av_end">To</label><input id="av_end" name="end_date" type="date" required min="<%= today %>"></div>
+    <div><button type="submit">Add available dates</button></div>
+  </form>
+  <% if (profile.availability.length) { %>
+    <ul class="plain">
+      <% profile.availability.forEach(function (a) { %>
+        <li>
+          <%= formatDate(a.start_date) %> to <%= formatDate(a.end_date) %>
+          <form method="post" action="/crew/availability/<%= a.id %>/delete" class="inline"><%- include('../partials/csrf') %><button class="link">remove</button></form>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</section>
+
+<section class="card" id="credits">
+  <h2>Credits</h2>
+  <% if (profile.credits.length) { %>
+    <ul class="plain">
+      <% profile.credits.forEach(function (c) { %>
+        <li>
+          <strong><%= c.project_title %></strong> · <%= c.role_title %><%= c.year ? ' · ' + c.year : '' %><%= c.company ? ' · ' + c.company : '' %>
+          <form method="post" action="/crew/credits/<%= c.id %>/delete" class="inline"><%- include('../partials/csrf') %><button class="link">remove</button></form>
+        </li>
+      <% }) %>
+    </ul>
+  <% } else { %>
+    <p class="muted">No credits yet.</p>
+  <% } %>
+  <form method="post" action="/crew/credits" class="row">
+    <%- include('../partials/csrf') %>
+    <div><label for="cr_title">Project</label><input id="cr_title" name="project_title" required maxlength="160"></div>
+    <div><label for="cr_role">Your role</label><input id="cr_role" name="role_title" required maxlength="120"></div>
+    <div><label for="cr_year">Year</label><input id="cr_year" name="year" type="number" min="1900" max="2100"></div>
+    <div><label for="cr_company">Company</label><input id="cr_company" name="company" maxlength="160"></div>
+    <div><button type="submit">Add credit</button></div>
+  </form>
+</section>
+<%- include('../partials/footer') %>

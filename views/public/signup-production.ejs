@@ -1,0 +1,19 @@
+<%- include('../partials/header') %>
+<section class="card narrow">
+  <h1>Sign up as a production</h1>
+  <p class="muted">Signing up is free. You pay only when you open a project to crew, or with a subscription. <a href="/pricing">Pricing</a></p>
+  <form method="post" action="/production/signup">
+    <%- include('../partials/csrf') %>
+    <label for="company_name">Company or production name</label>
+    <input id="company_name" name="company_name" required maxlength="160" value="<%= values.company_name || '' %>" autocomplete="organization">
+    <label for="contact_name">Your name</label>
+    <input id="contact_name" name="contact_name" required maxlength="120" value="<%= values.contact_name || '' %>" autocomplete="name">
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" required maxlength="254" value="<%= values.email || '' %>" autocomplete="email">
+    <label for="password">Password <span class="muted">(at least 10 characters)</span></label>
+    <input id="password" name="password" type="password" required minlength="10" maxlength="200" autocomplete="new-password">
+    <button type="submit">Create production account</button>
+  </form>
+  <p class="muted">Looking for work? <a href="/crew/signup">Join as crew</a>.</p>
+</section>
+<%- include('../partials/footer') %>

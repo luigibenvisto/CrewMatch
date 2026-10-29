@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> · CrewMatch</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/">CrewMatch</a>
+  <nav>
+    <% if (account && account.type === 'crew') { %>
+      <a href="/crew" class="<%= path === '/' ? 'active' : '' %>">Dashboard</a>
+      <a href="/crew/jobs">Jobs for you</a>
+      <a href="/crew/profile">Profile</a>
+    <% } else if (account && account.type === 'production') { %>
+      <a href="/production">Dashboard</a>
+      <a href="/production/projects/new">Post a project</a>
+      <a href="/production/billing">Billing</a>
+    <% } else if (account && account.type === 'admin') { %>
+      <a href="/admin">Admin</a>
+    <% } else { %>
+      <a href="/pricing">Pricing</a>
+      <a href="/crew/login">Crew log in</a>
+      <a href="/production/login">Production log in</a>
+    <% } %>
+    <% if (account) { %>
+      <form method="post" action="/logout" class="inline">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="link">Log out</button>
+      </form>
+    <% } %>
+  </nav>
+</header>
+<main>
+<% if (flash) { %><div class="flash <%= flash.type %>" role="status"><%= flash.text %></div><% } %>
+<%- include('errors') %>

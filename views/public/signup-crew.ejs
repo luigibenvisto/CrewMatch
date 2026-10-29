@@ -1,0 +1,21 @@
+<%- include('../partials/header') %>
+<section class="card narrow">
+  <h1>Join CrewMatch as crew</h1>
+  <p class="muted">Free forever. You can add skills, gear, rates, availability and credits after signing up.</p>
+  <form method="post" action="/crew/signup">
+    <%- include('../partials/csrf') %>
+    <label for="full_name">Your name</label>
+    <input id="full_name" name="full_name" required maxlength="120" value="<%= values.full_name || '' %>" autocomplete="name">
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" required maxlength="254" value="<%= values.email || '' %>" autocomplete="email">
+    <label for="password">Password <span class="muted">(at least 10 characters)</span></label>
+    <input id="password" name="password" type="password" required minlength="10" maxlength="200" autocomplete="new-password">
+    <label for="city_code">Where you are based</label>
+    <%- include('../partials/city-select', { selected: values.city_code }) %>
+    <label for="primary_role">Your main role</label>
+    <%- include('../partials/role-select', { name: 'primary_role', selected: values.primary_role }) %>
+    <button type="submit">Create crew account</button>
+  </form>
+  <p class="muted">Hiring instead? <a href="/production/signup">Sign up as a production</a>.</p>
+</section>
+<%- include('../partials/footer') %>

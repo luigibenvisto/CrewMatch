@@ -1,0 +1,26 @@
+# Render "Blueprint": lets Render set up the web service for you from this repo.
+# The database is NOT created here on purpose: Render's free database is deleted
+# after 30 days. Use a free Neon database instead (see README) and paste its URL.
+services:
+  - type: web
+    name: crewmatch
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SEED_SAMPLE_DATA
+        value: "true"
+      - key: PAYMENTS_MODE
+        value: stub

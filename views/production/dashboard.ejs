@@ -1,0 +1,61 @@
+<%- include('../partials/header') %>
+<h1><%= production.company_name %></h1>
+<div class="split">
+  <section class="card">
+    <h2>Plan</h2>
+    <% if (subscription) { %>
+      <p>Subscription active until <strong><%= formatDate(subscription.current_period_end) %></strong>. All your projects are covered.</p>
+    <% } else { %>
+      <p>No subscription. You pay per project, or <a href="/production/billing">start a subscription</a>.</p>
+    <% } %>
+  </section>
+  <section class="card">
+    <h2>Need crew?</h2>
+    <p><a class="button" href="/production/projects/new">Post a project</a></p>
+  </section>
+</div>
+
+<section class="card">
+  <h2>Your projects</h2>
+  <% if (!projects.length) { %><p class="muted">No projects yet.</p><% } else { %>
+  <table>
+    <thead><tr><th>Project</th><th>Dates</th><th>Location</th><th>Positions</th><th>Status</th></tr></thead>
+    <tbody>
+      <% projects.forEach(function (p) { %>
+        <tr>
+          <td><a href="/production/projects/<%= p.id %>"><%= p.title %></a></td>
+          <td><%= formatDate(p.start_date) %> – <%= formatDate(p.end_date) %></td>
+          <td><%= p.city_name %></td>
+          <td><%= p.open_positions %> open of <%= p.position_count %></td>
+          <td><%= p.status === 'draft' ? 'Draft (not paid)' : p.status === 'open' ? 'Open' : 'Closed' %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+  <% } %>
+</section>
+
+<section class="card">
+  <h2>Booked crew</h2>
+  <p class="muted">After a job, confirm that it happened. It only counts on the crew member's record once you both confirm.</p>
+  <% if (!accepted.length) { %><p class="muted">No booked crew right now.</p><% } %>
+  <% accepted.forEach(function (e) { %>
+    <article class="item">
+      <h3><%= e.full_name %> · <%= roleLabel(e.role_code) %></h3>
+      <p><%= e.project_title %> · <%= formatDate(e.start_date) %> to <%= formatDate(e.end_date) %></p>
+      <p class="small">Contact: <a href="mailto:<%= e.contact_email %>"><%= e.contact_email %></a><%= e.contact_phone ? ' · ' + e.contact_phone : '' %></p>
+      <% if (e.production_confirmed_at) { %>
+        <p class="tag">You confirmed this job. Waiting for the crew member to confirm.</p>
+      <% } else if (today >= e.start_date) { %>
+        <% if (e.crew_confirmed_at) { %><p class="tag">The crew member confirmed this job. Your confirmation completes it.</p><% } %>
+        <form method="post" action="/production/engagements/<%= e.id %>/confirm" data-confirm="Confirm that <%= e.full_name %> worked this job?">
+          <%- include('../partials/csrf') %><input type="hidden" name="back" value="dashboard">
+          <button>Confirm job was worked</button>
+        </form>
+      <% } else { %>
+        <p class="small muted">You can confirm this job once it has started.</p>
+      <% } %>
+    </article>
+  <% }) %>
+</section>
+<%- include('../partials/footer') %>

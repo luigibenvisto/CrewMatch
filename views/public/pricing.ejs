@@ -1,0 +1,27 @@
+<%- include('../partials/header') %>
+<section class="card">
+  <h1>Pricing</h1>
+  <p class="lead"><strong>Crew: free, forever.</strong> No fees, no commission, no premium tier.</p>
+  <h2>Productions: pick what suits you</h2>
+  <div class="split">
+    <div class="card inset">
+      <h3><%= subscription.name %></h3>
+      <p class="price"><%= formatMoney(subscription.amountCents, subscription.currency) %> <span class="muted">every <%= subscription.periodDays %> days</span></p>
+      <p>Unlimited projects while it is active. Best if you shoot often.</p>
+    </div>
+    <div class="card inset">
+      <h3>Pay per project</h3>
+      <p>A one-off fee based on how long the project runs (start to end date, both days included).</p>
+      <table>
+        <thead><tr><th>Project length</th><th>Fee</th></tr></thead>
+        <tbody>
+          <% tiers.forEach(function (t) { %>
+            <tr><td><%= t.label %></td><td><%= formatMoney(t.priceCents) %></td></tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <p class="muted">Example: a <%= example.days %>-day project costs <%= formatMoney(example.amountCents) %>.</p>
+    </div>
+  </div>
+</section>
+<%- include('../partials/footer') %>

@@ -1,0 +1,102 @@
+<%- include('../partials/header') %>
+<h1>Hi <%= profile.full_name.split(' ')[0] %></h1>
+
+<div class="split">
+  <section class="card clock">
+    <h2>Days since last worked</h2>
+    <% if (clock.daysSinceLastWorked === null) { %>
+      <p class="big">–</p>
+      <p class="muted">No confirmed jobs yet.</p>
+    <% } else { %>
+      <p class="big"><%= clock.daysSinceLastWorked %></p>
+      <p class="muted">Last confirmed job ended <%= formatDate(clock.lastWorkedOn) %>. <%= clock.confirmedJobs %> confirmed job<%= clock.confirmedJobs === 1 ? '' : 's' %> in total.</p>
+    <% } %>
+    <p class="small muted">This clock resets only when both you and the production confirm a finished job.</p>
+  </section>
+  <section class="card">
+    <h2>Your profile</h2>
+    <% if (!profile.availability.length) { %>
+      <p class="flash error">You have no availability dates yet, so you will not be matched to any jobs. <a href="/crew/profile#availability">Add your availability</a>.</p>
+    <% } else { %>
+      <p><%= roleLabel(profile.primary_role) %> · <%= profile.city_name %> · travels up to <%= profile.travel_radius_km %> km</p>
+    <% } %>
+    <p><a class="button secondary" href="/crew/profile">Edit profile and availability</a></p>
+  </section>
+</div>
+
+<section class="card">
+  <h2>Offers waiting for your answer</h2>
+  <% if (!offers.length) { %>
+    <p class="muted">No offers right now.</p>
+  <% } %>
+  <% offers.forEach(function (e) { %>
+    <article class="item">
+      <h3><%= roleLabel(e.role_code) %> · <%= e.project_title %></h3>
+      <p><%= e.company_name %> · <%= e.city_name %> · <%= formatDate(e.start_date) %> to <%= formatDate(e.end_date) %></p>
+      <p>Offered rate: <%= e.offered_rate != null ? currency + ' ' + e.offered_rate + ' / day' : 'to be discussed' %></p>
+      <% if (e.message) { %><blockquote><%= e.message %></blockquote><% } %>
+      <div class="actions">
+        <form method="post" action="/crew/engagements/<%= e.id %>/accept"><%- include('../partials/csrf') %><button>Accept</button></form>
+        <form method="post" action="/crew/engagements/<%= e.id %>/decline"><%- include('../partials/csrf') %><button class="secondary">Decline</button></form>
+      </div>
+    </article>
+  <% }) %>
+</section>
+
+<section class="card">
+  <h2>Your booked jobs</h2>
+  <% if (!upcoming.length) { %><p class="muted">No booked jobs.</p><% } %>
+  <% upcoming.forEach(function (e) { %>
+    <article class="item">
+      <h3><%= roleLabel(e.role_code) %> · <%= e.project_title %></h3>
+      <p><%= e.company_name %> · <%= e.city_name %> · <%= formatDate(e.start_date) %> to <%= formatDate(e.end_date) %></p>
+      <p class="small">Contact: <%= e.contact_name %> · <a href="mailto:<%= e.contact_email %>"><%= e.contact_email %></a><%= e.contact_phone ? ' · ' + e.contact_phone : '' %></p>
+      <% if (e.crew_confirmed_at) { %>
+        <p class="tag">You confirmed this job. Waiting for the production to confirm.</p>
+      <% } else if (today >= e.start_date) { %>
+        <% if (e.production_confirmed_at) { %><p class="tag">The production confirmed this job. Your confirmation completes it.</p><% } %>
+        <div class="actions">
+          <form method="post" action="/crew/engagements/<%= e.id %>/confirm" data-confirm="Confirm that you worked this job?"><%- include('../partials/csrf') %><button>Confirm I worked this job</button></form>
+          <% if (!e.production_confirmed_at) { %>
+            <form method="post" action="/crew/engagements/<%= e.id %>/cancel" data-confirm="Cancel this job? Cancellations count against your record."><%- include('../partials/csrf') %><button class="danger">Cancel job</button></form>
+          <% } %>
+        </div>
+      <% } else { %>
+        <div class="actions">
+          <form method="post" action="/crew/engagements/<%= e.id %>/cancel" data-confirm="Cancel this job? Cancellations count against your record."><%- include('../partials/csrf') %><button class="danger">Cancel job</button></form>
+        </div>
+        <p class="small muted">You can confirm this job once it has started.</p>
+      <% } %>
+    </article>
+  <% }) %>
+</section>
+
+<section class="card">
+  <h2>Jobs that fit you</h2>
+  <% if (!jobs.length) { %><p class="muted">No matching jobs right now. Keeping your availability and skills up to date helps.</p><% } %>
+  <ul class="plain">
+  <% jobs.forEach(function (j) { %>
+    <li><strong><%= roleLabel(j.role_code) %></strong> · <%= j.project_title %> · <%= j.city_name %> · <%= formatDate(j.start_date) %></li>
+  <% }) %>
+  </ul>
+  <% if (jobCount) { %><p><a href="/crew/jobs">See all <%= jobCount %> matched jobs</a></p><% } %>
+</section>
+
+<% if (history.length) { %>
+<section class="card">
+  <h2>History</h2>
+  <table>
+    <thead><tr><th>Job</th><th>Dates</th><th>Status</th></tr></thead>
+    <tbody>
+    <% history.forEach(function (e) { %>
+      <tr>
+        <td><%= roleLabel(e.role_code) %> · <%= e.project_title %></td>
+        <td><%= formatDate(e.start_date) %> – <%= formatDate(e.end_date) %></td>
+        <td><%= e.status === 'completed' ? 'Confirmed by both sides' : e.status === 'cancelled' ? 'Cancelled by ' + e.cancelled_by : e.status.charAt(0).toUpperCase() + e.status.slice(1) %></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+</section>
+<% } %>
+<%- include('../partials/footer') %>
